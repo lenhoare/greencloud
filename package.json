@@ -1,0 +1,49 @@
+{
+  "name": "greencloud",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-ready Cloudflare Workers foundation: Hono, Google OAuth, D1, server-rendered UI.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "npm run db:migrate:remote && wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:new": "wrangler d1 migrations create DB",
+    "cf-typegen": "wrangler types --strict-vars=false",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run test",
+    "vendor:htmx": "cp node_modules/htmx.org/dist/htmx.min.js public/vendor/htmx-2.0.11.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lenhoare/greencloud.git"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@hono/swagger-ui": "^0.6.2",
+    "@hono/zod-openapi": "^1.6.3",
+    "hono": "^4.13.16",
+    "jose": "^6.2.15",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.5.0",
+    "@types/node": "^22.20.5",
+    "htmx.org": "^2.0.11",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.156.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.28.2": true,
+    "workerd@1.20260815.1": true,
+    "workerd@1.20261102.1": true
+  }
+}

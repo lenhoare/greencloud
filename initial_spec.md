@@ -1,4 +1,4 @@
-ou are building a production-grade greenfield web application on Cloudflare Workers.
+You are building a production-grade greenfield web application on Cloudflare Workers.
 
 Stack requirements (non-negotiable):
 - Cloudflare Workers runtime
@@ -50,3 +50,21 @@ Please implement:
 Start by scaffolding the full project, implementing the Google OAuth flow end-to-end, and establishing the protected route patterns. After that, make reasonable assumptions and continue building out a solid multi-feature foundation (data models, additional routes, admin-style endpoints, etc.) so the result is immediately useful and easy to extend. Prefer thorough, production-oriented code over minimal demos.
 
 When you finish the initial scaffold, summarize what was built and list clear next steps or extension points.
+
+
+---
+
+## Revisions agreed before the first build
+
+These decisions refine the brief above; the implementation follows them.
+
+- **Platform**: Cloudflare Workers (the credits being used are for Claude Code, not a cloud provider).
+- **Sessions in D1, not KV.** KV is eventually consistent (~60s), so logout and revocation could lag across regions. D1 is strongly consistent and is needed for app data anyway. The cookie holds a random token and D1 stores only its SHA-256.
+- **OAuth hardening**: PKCE (S256), `state` and `nonce` on top of ID token validation (signature, iss, aud, exp).
+- **Access control**: email/domain allowlist (`ALLOWED_EMAILS`, `ALLOWED_DOMAINS` matched on the `hd` claim) plus `ADMIN_EMAILS`. Deny by default.
+- **Roles**: `user` / `admin` app roles; per-project `owner` / `editor` / `viewer`.
+- **Example feature**: Projects → Items with sharing, as a reference pattern for future features.
+- **Frontend**: server-rendered Hono JSX + htmx `hx-boost` (no separate SPA build).
+- **Rate limiting**: native Workers Rate Limiting binding rather than a hand-rolled KV counter.
+- **Background work**: Cron Triggers now (free plan); Queues documented as the next step (paid plan).
+- **CI**: GitHub Actions for typecheck, tests and a dry-run build, with optional auto-deploy.

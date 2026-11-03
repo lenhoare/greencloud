@@ -1,0 +1,68 @@
+/**
+ * Wrangler configuration for Greencloud.
+ * Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+ *
+ * After changing bindings here, run `npm run cf-typegen` to refresh
+ * worker-configuration.d.ts so `Env` stays in sync.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "greencloud",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+
+  // Workers Logs: structured console.log output is searchable in the dashboard.
+  "observability": { "enabled": true },
+
+  // Static files (CSS, JS, images) are served directly from Cloudflare's edge
+  // without invoking the Worker. Anything that doesn't match a file falls
+  // through to the Worker. Headers for these files live in public/_headers.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // D1 (SQLite) holds users, sessions and app data.
+  // Sessions live in D1 rather than KV on purpose: KV is eventually consistent
+  // (up to ~60s globally), so a logged-out or disabled session could keep
+  // working in other regions. D1 reads/writes go to a single primary.
+  //
+  // Before your first deploy: `npx wrangler d1 create greencloud` and paste the
+  // returned database_id below.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "greencloud",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Native Workers rate limiting (no KV/DO needed). `period` must be 10 or 60.
+  // namespace_id is any integer unique within your account.
+  "ratelimits": [
+    { "name": "RATE_LIMIT_AUTH", "namespace_id": "41001", "simple": { "limit": 20, "period": 60 } },
+    { "name": "RATE_LIMIT_API", "namespace_id": "41002", "simple": { "limit": 300, "period": 60 } }
+  ],
+
+  // Daily maintenance (expired sessions, old audit events). See src/scheduled.ts.
+  "triggers": { "crons": ["17 3 * * *"] },
+
+  // Non-secret configuration. Secrets (GOOGLE_CLIENT_SECRET) are set with
+  // `wrangler secret put` in production and .dev.vars locally.
+  "vars": {
+    "APP_NAME": "Greencloud",
+    // Public URL of the app, e.g. "https://greencloud.example.com". Optional:
+    // when empty the request origin is used to build the OAuth redirect URI.
+    "APP_URL": "",
+    // Who may sign in. Comma-separated. Use "*" in ALLOWED_EMAILS to allow any
+    // verified Google account. ADMIN_EMAILS are always allowed.
+    "ALLOWED_EMAILS": "",
+    "ALLOWED_DOMAINS": "",
+    "ADMIN_EMAILS": "",
+    // Extra origins allowed to call /api with credentials (CORS). Comma-separated.
+    "CORS_ORIGINS": "",
+    "SESSION_TTL_DAYS": "30",
+    "AUDIT_RETENTION_DAYS": "180"
+  }
+}
